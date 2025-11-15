@@ -1,4 +1,6 @@
 import json
+import os
+import gzip
 
 def has_nested_complexity(data):
     """
@@ -50,7 +52,7 @@ def generate_sql_schema_and_types(data):
     return f"CREATE TABLE {table_name} (ID INTEGER PRIMARY KEY, " + ", ".join(columns) + ");"
 
 
-def process_json_data(data, metadata_comment):
+def process_json_data(data, metadata_comment, base_dir, auto_compress=False):
     """Intelligently determines storage type and generates schema/collection."""
     
     # 1. Force Check (Highest priority for hackathon demo)
@@ -65,25 +67,62 @@ def process_json_data(data, metadata_comment):
     else:
         storage_choice = "SQL (Heuristic: Flat/Homogeneous)"
 
-    # --- Result Generation (Simulate DB Creation) ---
+    # --- Result Generation (NOW SAVES FILE) ---
     
+    db_entity_name = "unknown_entity"
+    
+    try:
+        if isinstance(data, list) and data:
+            db_entity_name = next(iter(data[0].keys())) + "_collection"
+        elif isinstance(data, dict):
+            db_entity_name = next(iter(data.keys())) + "_collection"
+    except Exception:
+        pass # Keep default name
+        
+    target_dir_name = "structured_data"
+    final_dir = os.path.join(base_dir, target_dir_name)
+    os.makedirs(final_dir, exist_ok=True)
+    
+    filename = f"{db_entity_name}.json"
+    intelligence_action = ""
+    schema_output = ""
+
     if storage_choice.startswith("SQL"):
-        # Simulate creating a SQL table and schema
         schema_output = generate_sql_schema_and_types(data)
-        collection_name = schema_output.split()[2]
-        intelligence_action = f"Generated Table Schema for **{collection_name}**"
+        intelligence_action = f"Generated Table Schema for **{db_entity_name}**."
     else:
-        # Simulate creating a NoSQL collection
-        # Use the first key of the first object to name the collection
-        collection_name = next(iter(data[0].keys())) + "_collection" if isinstance(data, list) and data else "unknown_collection"
-        schema_output = "No fixed schema required (Document-based storage). Data stored as JSON objects."
-        intelligence_action = f"Created NoSQL Collection **{collection_name}**"
+        schema_output = "No fixed schema required (Document-based storage)."
+        intelligence_action = f"Designated for NoSQL Collection **{db_entity_name}**."
+
+    # Now, save the file (compressed or not)
+    if auto_compress:
+        filename += ".gz"
+        final_path = os.path.join(final_dir, filename)
+        try:
+            # Write compressed text
+            with gzip.open(final_path, "wt", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+            intelligence_action += " Data **auto-compressed**."
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to write compressed file: {e}"}
+            
+    else:
+        # Write plain text
+        final_path = os.path.join(final_dir, filename)
+        try:
+            with open(final_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+            intelligence_action += " Data stored as plain JSON."
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to write file: {e}"}
         
     return {
         "status": "success",
         "type": "Structured JSON",
         "storage_choice": storage_choice,
-        "db_entity_name": collection_name,
+        "db_entity_name": db_entity_name,
+        "filename": filename,
+        "storage_location": final_path,
         "generated_schema": schema_output,
         "intelligence_action": intelligence_action
     }

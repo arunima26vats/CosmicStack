@@ -2,6 +2,8 @@ from PIL import Image
 import os
 import numpy as np
 from werkzeug.utils import secure_filename
+import gzip
+import shutil
 
 # --- GLOBAL Metadata Database (Allows "learning" new categories during runtime) ---
 # NOTE: In a production system, this would be loaded from a persistent DB.
@@ -80,7 +82,7 @@ def determine_directory(tags):
         # No tags or only error tags
         return "unclassified"
 
-def process_media_file(file_storage_object, base_dir, metadata_comment):
+def process_media_file(file_storage_object, base_dir, metadata_comment, auto_compress=False):
     filename = secure_filename(file_storage_object.filename)
     
     # 1. Save file temporarily for analysis
@@ -102,11 +104,35 @@ def process_media_file(file_storage_object, base_dir, metadata_comment):
     final_path = os.path.join(final_dir, filename)
     os.rename(temp_path, final_path) 
     
+    # 4. Compress file if requested
+    intelligence_action = f"Classified and placed in **{target_dir_name}**"
+    
+    if auto_compress:
+        compressed_path = final_path + ".gz"
+        
+        try:
+            # Compress the file
+            with open(final_path, 'rb') as f_in:
+                with gzip.open(compressed_path, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            
+            # Remove the original uncompressed file
+            os.remove(final_path)
+            
+            # Update paths and info for the response
+            filename = filename + ".gz"
+            final_path = compressed_path
+            intelligence_action += " and **auto-compressed**."
+            
+        except Exception as e:
+            # If compression fails, just keep the original file
+            intelligence_action += f" (Compression failed: {e})."
+    
     return {
         "status": "success",
         "type": "Media/File",
         "filename": filename,
         "classification_tags": tags,
         "storage_location": final_path,
-        "intelligence_action": f"Classified and placed in **{target_dir_name}**"
+        "intelligence_action": intelligence_action
     }

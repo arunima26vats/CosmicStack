@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StorageAI - Intelligent Storage System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
     <style>
         /* Custom Tailwind Configuration for Purple Accent */
         :root {
@@ -23,34 +26,43 @@
             background-color: var(--primary-purple);
             color: white;
             padding: 8px 16px;
-            border-radius: 9999px; /* rounded-full */
+            border-radius: 9999px; 
             border: none;
             cursor: pointer;
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 600; /* font-semibold */
+            font-size: 0.875rem; 
+            font-weight: 600; 
             margin-right: 1rem;
             transition: background-color 0.2s;
         }
         .file-input-theme:hover::-webkit-file-upload-button {
             background-color: #8000FF;
         }
+
+        /* Modal specific styling */
+        .modal-fade-enter { opacity: 0; transform: scale(0.95); }
+        .modal-fade-enter-active { 
+            opacity: 1; 
+            transform: scale(1); 
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out; 
+        }
+        .g_id_signin { display: flex; justify-content: center; } 
     </style>
 </head>
 
 <body class="bg-[#1A1A2E] text-[#E0E0E0] p-6 min-h-screen">
 
-    <!-- Header / Logo -->
     <header class="flex justify-between items-center mb-10">
         <div class="text-3xl font-bold flex items-center">
             <svg class="w-8 h-8 mr-3 text-purple" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zm0 9a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2z"></path></svg>
             <span class="text-white">Storage<span class="text-purple">AI</span></span>
         </div>
-        <input type="text" placeholder="Search files..." class="bg-card p-2 rounded-lg border border-gray-600 focus:border-purple focus:ring-1 focus:ring-purple text-sm w-1/4">
+        
+        <div id="authContainer" class="flex items-center space-x-4">
+            </div>
     </header>
 
     <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        <!-- 1. The Uploader Component -->
         <div class="lg:col-span-1 bg-card p-6 rounded-xl shadow-lg h-full">
             <div class="border-purple-dashed p-10 rounded-xl flex flex-col items-center justify-center text-center">
                 <svg class="w-16 h-16 text-purple mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -58,29 +70,47 @@
                 <p class="text-sm text-gray-400 mb-6">Drag and drop files here or click to browse. Supports all file types with intelligent categorization.</p>
 
                 <form id="uploadForm" onsubmit="handleSubmission(event)" class="w-full space-y-4">
-                    <input type="file" name="file" id="file_input" class="block w-full text-sm text-gray-500 file-input-theme cursor-pointer">
-                    
-                    <textarea name="json_data" rows="5" placeholder="OR paste your structured JSON data here." class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm focus:ring-purple focus:border-purple"></textarea>
-                    
-                    <input type="text" name="metadata_comment" placeholder="Optional Metadata Comment (e.g., 'Relational')" class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm focus:ring-purple focus:border-purple">
-                    
-                    <button type="submit" class="w-full bg-purple text-white py-3 rounded-lg font-bold hover:bg-[#8000FF] transition duration-200 shadow-purple">
-                        Analyze and Store
-                    </button>
-                </form>
+    <input type="file" name="file" id="file_input" 
+                class="block w-full text-sm text-gray-500 file-input-theme cursor-pointer">
+
+    <textarea name="json_data" rows="5" 
+                placeholder="OR paste your structured JSON data here." 
+                class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm 
+                        focus:ring-purple focus:border-purple">
+    </textarea>
+
+    <input type="text" name="metadata_comment" 
+                placeholder="Optional Metadata Comment (e.g., 'Relational')" 
+                class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm 
+                         focus:ring-purple focus:border-purple">
+
+    <div class="flex items-center justify-center space-x-2 text-sm text-gray-400 mt-3">
+        <input type="checkbox" name="auto_compress" id="auto_compress" 
+                class="form-checkbox h-5 w-5 rounded bg-card text-purple 
+                         border-gray-600 focus:ring-purple">
+        <label for="auto_compress" class="cursor-pointer">
+            Auto-compress to save space?
+        </label>
+    </div>
+
+    <button type="submit"
+                        class="w-full bg-purple text-white py-3 rounded-lg font-bold 
+                               hover:bg-[#8A2BE2] transition duration-200 shadow-purple mt-4">
+        Analyze and Store
+    </button>
+</form>
+
             </div>
         </div>
 
         <div class="lg:col-span-2 space-y-8">
             
-            <!-- Stats Cards Row (Real-Time Data) -->
             <div class="grid grid-cols-3 gap-4">
                 <div class="bg-card p-4 rounded-xl shadow-md flex flex-col items-start">
                     <div class="flex items-center text-purple mb-2">
                         <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zM5 8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
                         <span class="text-sm font-semibold">Storage Used</span>
                     </div>
-                    <!-- TARGET FOR STORAGE USED -->
                     <p id="statStorage" class="text-2xl font-bold">-- / --</p>
                 </div>
                 <div class="bg-card p-4 rounded-xl shadow-md flex flex-col items-start">
@@ -88,29 +118,24 @@
                         <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M13 14L8 9l5-5V14zM4 18h12a1 1 0 000-2H4a1 1 0 000 2z"></path></svg>
                         <span class="text-sm font-semibold">Files Processed</span>
                     </div>
-                     <!-- TARGET FOR FILE COUNT -->
-                    <p id="statFiles" class="text-2xl font-bold">--</p>
+                        <p id="statFiles" class="text-2xl font-bold">--</p>
                 </div>
                 <div class="bg-card p-4 rounded-xl shadow-md flex flex-col items-start">
                     <div class="flex items-center text-purple mb-2">
                         <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L10 9.586V6z" clip-rule="evenodd"></path></svg>
                         <span class="text-sm font-semibold">Last Upload</span>
                     </div>
-                    <!-- TARGET FOR LAST UPLOAD TIME -->
                     <p id="statLastUpload" class="text-2xl font-bold">N/A</p>
                 </div>
             </div>
 
-            <!-- API Status Area -->
             <div class="bg-card p-6 rounded-xl shadow-lg">
                 <h3 class="text-xl font-semibold mb-4 text-purple">API / Intelligence Status</h3>
                 <pre id="result" class="bg-[#1A1A2E] p-4 rounded-lg overflow-x-auto text-sm text-green-300 whitespace-pre-wrap">Submit data to see the intelligent analysis and storage decision (SQL/NoSQL or Classification) here...</pre>
             </div>
             
-            <!-- Recent Files Container -->
             <div class="bg-card p-6 rounded-xl shadow-lg">
                 <h3 class="text-xl font-semibold mb-4 text-white">Recent Files <span class="text-sm float-right text-purple cursor-pointer hover:underline">View All</span></h3>
-                <!-- TARGET FOR JAVASCRIPT: Dynamic content will be loaded here -->
                 <div id="recentFilesContainer" class="grid grid-cols-2 gap-4">
                     <p class="col-span-2 text-center text-gray-500">Loading recent files...</p>
                 </div>
@@ -119,29 +144,338 @@
         </div>
     </main>
 
+    <div id="authModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center modal-fade-enter">
+        <div id="authPanel" class="bg-card p-8 rounded-xl w-full max-w-md shadow-2xl relative">
+            
+            <button onclick="closeFileViewer()"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-white transition duration-150">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <h2 id="authTitle" class="text-3xl font-bold mb-6 text-center text-purple">Sign In</h2>
+            
+            <div class="mb-6 border-b border-gray-700 pb-6 text-center">
+                <div id="g_id_onload"
+                    data-client_id="YOUR_GOOGLE_CLIENT_ID" 
+                    data-callback="handleCredentialResponse"
+                    data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-size="large"
+                    data-theme="outline"
+                    data-text="sign_in_with"
+                    data-shape="pill"
+                    data-logo_alignment="left">
+                </div>
+                <p class="text-xs text-gray-500 mt-4">OR use your email and password below</p>
+            </div>
+            <form id="signInForm" onsubmit="handleAuthSubmit(event, 'signin')" class="space-y-4">
+                <div>
+                    <label for="signin_email" class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="signin_email" name="email" required
+                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
+                </div>
+                <div>
+                    <label for="signin_password" class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="signin_password" name="password" required
+                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
+                </div>
+                <button type="submit"
+                        class="w-full bg-purple text-white py-3 rounded-lg font-bold hover:bg-[#8A2BE2] transition duration-200 shadow-purple">
+                    Sign In to StorageAI
+                </button>
+            </form>
+            
+            <form id="signUpForm" onsubmit="handleAuthSubmit(event, 'signup')" class="space-y-4 hidden">
+                <div>
+                    <label for="signup_username" class="block text-sm font-medium mb-1">Username</label>
+                    <input type="text" id="signup_username" name="username" required
+                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
+                </div>
+                <div>
+                    <label for="signup_email" class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="signup_email" name="email" required
+                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
+                </div>
+                <div>
+                    <label for="signup_password" class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="signup_password" name="password" required
+                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
+                </div>
+                <button type="submit"
+                        class="w-full bg-purple text-white py-3 rounded-lg font-bold hover:bg-[#8A2BE2] transition duration-200 shadow-purple">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <p id="toggleText">
+                    Don't have an account? 
+                    <button type="button" onclick="toggleAuthMode('signup')" class="text-purple font-semibold hover:underline">
+                        Sign Up
+                    </button>
+                </p>
+            </div>
+            
+        </div>
+    </div>
+    <div id="fileViewerModal" class="fixed inset-0 z-50 bg-black bg-opacity-80 backdrop-blur-sm hidden p-6">
+        <div class="bg-dark-bg w-full max-w-5xl mx-auto h-full rounded-xl shadow-purple overflow-hidden flex flex-col">
+            <div class="p-4 bg-card flex justify-between items-center border-b border-gray-700">
+                <h2 id="modalTitle" class="text-xl font-bold text-purple">File Viewer</h2>
+                <button onclick="closeFileViewer()" class="text-white hover:text-red-500 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modalContent" class="flex-grow p-4 overflow-auto text-sm text-gray-300 flex items-center justify-center">
+                Loading file content...
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- Helper function to map file type to icon path ---
+        // --- AUTHENTICATION JS FUNCTIONS (RESTORED) ---
+
+        // Google Sign-In Callback
+        function handleCredentialResponse(response) {
+            console.log("Google ID Token received:", response.credential);
+            
+            fetch('/api/google_signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: response.credential }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`Google Sign-In Successful! Welcome, ${data.username}!`);
+                    document.getElementById('authModal').classList.add('hidden');
+                    updateHeader(data.username); 
+                    loadRecentFiles(); 
+                    loadDashboardStats();
+                } else {
+                    alert(`Google Sign-In Failed: ${data.message}. Check backend verification.`);
+                }
+            })
+            .catch(error => {
+                alert("Error communicating with backend for Google Sign-In.");
+                console.error('Google Auth Error:', error);
+            });
+        }
+        
+        // Standard Email/Password Submission
+        async function handleAuthSubmit(event, endpoint) {
+            event.preventDefault(); 
+            const formId = endpoint === 'signin' ? 'signInForm' : 'signUpForm';
+            const form = document.getElementById(formId);
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            const data = {};
+            const formData = new FormData(form);
+            for (let [key, value] of formData.entries()) { data[key] = value; }
+
+            if (endpoint === 'signup' && data.password.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return;
+            }
+
+            const originalButtonText = submitButton.textContent;
+            submitButton.textContent = 'Processing...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch(`/api/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    alert(`${result.message} Welcome, ${result.username}!`);
+                    document.getElementById('authModal').classList.add('hidden');
+                    updateHeader(result.username); 
+                    loadRecentFiles(); 
+                    loadDashboardStats();
+                } else {
+                    alert(`Authentication Failed: ${result.message}`);
+                }
+            } catch (error) {
+                alert("Network Error: Could not connect to the authentication server.");
+                console.error('Auth Fetch Error:', error);
+            } finally {
+                submitButton.textContent = originalButtonText;
+                submitButton.disabled = false;
+            }
+        }
+
+        // Header Management: Draws Sign In/Up or Welcome/Logout buttons
+        function updateHeader(username = null) {
+            const authContainer = document.getElementById('authContainer');
+            
+            if (username) {
+                authContainer.innerHTML = `
+                    <input type="text" placeholder="Search files..." class="bg-card p-2 rounded-lg border border-gray-600 focus:border-purple focus:ring-1 focus:ring-purple text-sm w-48">
+                    <span class="text-white font-semibold">Welcome, ${username}</span>
+                    <button onclick="handleLogout()" 
+                        class="bg-purple text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#8A2BE2] transition duration-150 shadow-purple">
+                        Logout
+                    </button>
+                `;
+            } else {
+                authContainer.innerHTML = `
+                    <input type="text" placeholder="Search files..." class="bg-card p-2 rounded-lg border border-gray-600 focus:border-purple focus:ring-1 focus:ring-purple text-sm w-48">
+                    <button onclick="openAuthModal('signin')" 
+                        class="bg-transparent text-purple py-2 px-4 rounded-lg font-semibold border border-purple hover:bg-purple/10 transition duration-150">
+                        Sign In
+                    </button>
+                    <button onclick="openAuthModal('signup')" 
+                        class="bg-purple text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#8A2BE2] transition duration-150 shadow-purple">
+                        Sign Up
+                    </button>
+                `;
+            }
+        }
+
+        // Logout API Call
+        async function handleLogout() {
+            try {
+                const response = await fetch('/api/logout', { method: 'POST' });
+                if (response.ok) {
+                    alert("You have been successfully logged out.");
+                    updateHeader(null); 
+                } else {
+                    alert("Logout failed.");
+                }
+            } catch (error) {
+                alert("Network Error: Could not log out.");
+                console.error('Logout Fetch Error:', error);
+            }
+        }
+
+        // Modal Open
+        function openAuthModal(mode) {
+            const modal = document.getElementById('authModal');
+            modal.classList.remove('hidden');
+            const authPanel = document.getElementById('authPanel');
+            authPanel.classList.remove('modal-fade-enter');
+            authPanel.classList.add('modal-fade-enter-active');
+            toggleAuthMode(mode);
+        }
+
+        // Modal Toggle (Sign In / Sign Up)
+        function toggleAuthMode(mode) {
+            const title = document.getElementById('authTitle');
+            const signInForm = document.getElementById('signInForm');
+            const signUpForm = document.getElementById('signUpForm');
+            const toggleText = document.getElementById('toggleText');
+
+            if (mode === 'signin') {
+                title.textContent = 'Sign In';
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                toggleText.innerHTML = `Don't have an account? 
+                    <button type="button" onclick="toggleAuthMode('signup')" class="text-purple font-semibold hover:underline">
+                        Sign Up
+                    </button>`;
+            } else if (mode === 'signup') {
+                title.textContent = 'Sign Up';
+                signInForm.classList.add('hidden');
+                signUpForm.classList.remove('hidden');
+                toggleText.innerHTML = `Already have an account? 
+                    <button type="button" onclick="toggleAuthMode('signin')" class="text-purple font-semibold hover:underline">
+                        Sign In
+                    </button>`;
+            }
+        }
+
+        // --- File Viewer Functions (Unchanged) ---
+        function closeFileViewer() {
+            document.getElementById('fileViewerModal').classList.add('hidden');
+            document.getElementById('modalContent').innerHTML = 'Loading file content...';
+        }
+
+        function openFileViewer(pathInfo, filename, fileType) {
+            const modal = document.getElementById('fileViewerModal');
+            const title = document.getElementById('modalTitle');
+            const contentArea = document.getElementById('modalContent');
+            
+            title.textContent = `Viewing: ${filename}`;
+            contentArea.innerHTML = '<p class="text-center py-10 text-yellow-400">Fetching and preparing file...</p>';
+            contentArea.classList.add('items-center', 'justify-center');
+            modal.classList.remove('hidden');
+
+            const viewApiUrl = `/api/view_file/${pathInfo}`;
+            
+            if (fileType === 'Image') {
+                contentArea.classList.remove('items-center', 'justify-center');
+                contentArea.innerHTML = `<img src="${viewApiUrl}" alt="${filename}" class="max-h-full max-w-full object-contain mx-auto">`;
+                return;
+            } 
+            
+            if (fileType === 'Document' && filename.toLowerCase().endsWith('.pdf')) {
+                contentArea.classList.remove('items-center', 'justify-center');
+                contentArea.innerHTML = `<iframe src="${viewApiUrl}" class="w-full h-full" style="min-height: 500px;" frameborder="0"></iframe>`;
+                return;
+            } 
+            
+            if (fileType === 'JSON' || fileType === 'Document' || fileType === 'Other' || fileType === 'Archive') {
+                fetch(viewApiUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
+                        return response.text();
+                    })
+                    .then(text => {
+                        contentArea.classList.remove('items-center', 'justify-center');
+                        let formattedText = text;
+                        let textColor = 'text-gray-300';
+                        
+                        if (fileType === 'JSON' || filename.toLowerCase().endsWith('.json') || filename.toLowerCase().replace('.gz', '').endsWith('.json')) {
+                            try {
+                                const parsed = JSON.parse(text);
+                                formattedText = JSON.stringify(parsed, null, 2);
+                                textColor = 'text-green-300';
+                            } catch (e) {
+                            }
+                        }
+
+                        contentArea.innerHTML = `<pre class="whitespace-pre-wrap p-4 bg-gray-800 rounded-lg ${textColor}">${formattedText}</pre>`;
+                    })
+                    .catch(error => {
+                        contentArea.innerHTML = `<p class="text-center py-10 text-red-500">Error viewing file: ${error.message}. It might be a non-text file or an unsupported format.</p>`;
+                        console.error("View File Error:", error);
+                    });
+                return;
+            }
+
+            contentArea.classList.add('items-center', 'justify-center'); 
+            contentArea.innerHTML = `<p class="text-center py-10 text-red-500">
+                File type **${fileType}** is not supported for inline viewing yet. 
+                <br>Please download the file directly from the storage folder.
+            </p>`;
+        }
+        
+        // --- Dashboard Functions (Unchanged) ---
         function getIconPath(fileType) {
-            // Document, Image, Video, Audio, Archive, Other
             switch(fileType) {
                 case 'Document': return 'M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm6 10a1 1 0 100-2 1 1 0 000 2z';
                 case 'Image': return 'M10 4a3 3 0 100 6 3 3 0 000-6zM3 17a1 1 0 01-1-1V4a1 1 0 011-1h14a1 1 0 011 1v12a1 1 0 01-1 1H3z';
                 case 'Video': return 'M15 10l-4 4V6l4 4zM2 17a1 1 0 011-1h14a1 1 0 011 1H2z';
                 case 'Audio': return 'M9 13H5a1 1 0 01-1-1V8a1 1 0 011-1h4l4-4v14l-4-4z';
                 case 'Archive': return 'M5 16a2 2 0 01-2-2v-4a2 2 0 012-2h10a2 2 0 012 2v4a2 2 0 01-2 2H5zm0 2a2 2 0 002 2h6a2 2 0 002-2v-2a2 2 0 00-2-2H7a2 2 0 00-2 2v2z';
-                default: return 'M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zm0 9a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2z'; // Database/Other icon
+                case 'JSON': return 'M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zm0 9a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2z'; 
+                default: return 'M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zm0 9a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2z';
             }
         }
-
-        // --- Function to generate the HTML for a single file card ---
+        
         function createFileCardHTML(file) {
             const iconPath = getIconPath(file.type);
-            
-            // Simple display of 'category' as a proxy for 'time ago' in the MVP
-            const timeAgo = file.category.replace(/_/g, ' '); // Clean up the category name
+            const timeAgo = file.category.replace(/_/g, ' '); 
             
             return `
-                <div class="bg-card p-4 rounded-xl flex items-center shadow-md border border-gray-700 hover:border-purple transition duration-150">
+                <div class="bg-card p-4 rounded-xl flex items-center shadow-md border border-gray-700 hover:border-purple transition duration-150 cursor-pointer" 
+                    onclick="openFileViewer('${file.server_path_info}', '${file.name}', '${file.type}')">
                     <div class="bg-purple/20 p-3 rounded-full mr-4">
                         <svg class="w-6 h-6 text-purple" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="${iconPath}" clip-rule="evenodd"></path></svg>
                     </div>
@@ -152,8 +486,7 @@
                 </div>
             `;
         }
-        
-        // --- Function to fetch and update dashboard statistics (REAL-TIME) ---
+
         function loadDashboardStats() {
             fetch('/api/stats')
                 .then(response => response.json())
@@ -164,14 +497,12 @@
                 })
                 .catch(error => {
                     console.error('Error fetching stats:', error);
-                    // Handle API failure gracefully (e.g., set stats to Error or N/A)
                     document.getElementById('statStorage').textContent = `API Error`;
                     document.getElementById('statFiles').textContent = `API Error`;
                     document.getElementById('statLastUpload').textContent = `API Error`;
                 });
         }
 
-        // --- Function to fetch and render the files ---
         function loadRecentFiles() {
             const container = document.getElementById('recentFilesContainer');
             container.innerHTML = '<p class="col-span-2 text-center text-gray-500">Loading...</p>';
@@ -185,12 +516,12 @@
                 })
                 .then(data => {
                     if (data.recent_files && data.recent_files.length > 0) {
-                        container.innerHTML = ''; // Clear the "Loading..." message
+                        container.innerHTML = ''; 
                         data.recent_files.forEach(file => {
                             container.innerHTML += createFileCardHTML(file);
                         });
                     } else if (data.error) {
-                         container.innerHTML = `<p class="col-span-2 text-center text-red-500">Error loading files: ${data.error}</p>`;
+                            container.innerHTML = `<p class="col-span-2 text-center text-red-500">Error loading files: ${data.error}</p>`;
                     }
                     else {
                         container.innerHTML = '<p class="col-span-2 text-center text-gray-500">No files found in storage yet. Try uploading one!</p>';
@@ -202,7 +533,6 @@
                 });
         }
         
-        // --- Main submission handler (Updated to call loadRecentFiles and loadDashboardStats) ---
         function handleSubmission(event) {
             event.preventDefault(); 
             
@@ -220,37 +550,105 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Display the beautiful JSON result
                 resultArea.textContent = JSON.stringify(data, null, 4); 
                 resultArea.classList.remove('text-yellow-400');
                 
                 if (data.status === 'error') {
-                     resultArea.classList.add('text-red-500'); // Error color
+                        resultArea.classList.add('text-red-500'); 
                 } else {
-                     resultArea.classList.add('text-green-300'); // Success color
+                        resultArea.classList.add('text-green-300'); 
                 }
                 
-                // CRUCIAL: Refresh both the file list and the stats immediately
                 loadRecentFiles(); 
                 loadDashboardStats();
             })
             .catch(error => {
                 resultArea.textContent = 'An error occurred. Check the browser console and Flask terminal.';
                 resultArea.classList.remove('text-yellow-400');
-                resultArea.classList.add('text-red-500'); // Error color
+                resultArea.classList.add('text-red-500'); 
                 console.error('Fetch Error:', error);
             });
         }
 
-        // --- Initial Page Load and Real-Time Interval Setup ---
-        window.onload = function() {
-            // Initial load for both elements
+
+        // --- File Viewer Functions (Unchanged) ---
+        function closeFileViewer() {
+            document.getElementById('fileViewerModal').classList.add('hidden');
+            document.getElementById('modalContent').innerHTML = 'Loading file content...';
+        }
+
+        function openFileViewer(pathInfo, filename, fileType) {
+            const modal = document.getElementById('fileViewerModal');
+            const title = document.getElementById('modalTitle');
+            const contentArea = document.getElementById('modalContent');
+            
+            title.textContent = `Viewing: ${filename}`;
+            contentArea.innerHTML = '<p class="text-center py-10 text-yellow-400">Fetching and preparing file...</p>';
+            contentArea.classList.add('items-center', 'justify-center');
+            modal.classList.remove('hidden');
+
+            const viewApiUrl = `/api/view_file/${pathInfo}`;
+            
+            if (fileType === 'Image') {
+                contentArea.classList.remove('items-center', 'justify-center');
+                contentArea.innerHTML = `<img src="${viewApiUrl}" alt="${filename}" class="max-h-full max-w-full object-contain mx-auto">`;
+                return;
+            } 
+            
+            if (fileType === 'Document' && filename.toLowerCase().endsWith('.pdf')) {
+                contentArea.classList.remove('items-center', 'justify-center');
+                contentArea.innerHTML = `<iframe src="${viewApiUrl}" class="w-full h-full" style="min-height: 500px;" frameborder="0"></iframe>`;
+                return;
+            } 
+            
+            if (fileType === 'JSON' || fileType === 'Document' || fileType === 'Other' || fileType === 'Archive') {
+                fetch(viewApiUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
+                        return response.text();
+                    })
+                    .then(text => {
+                        contentArea.classList.remove('items-center', 'justify-center');
+                        let formattedText = text;
+                        let textColor = 'text-gray-300';
+                        
+                        if (fileType === 'JSON' || filename.toLowerCase().endsWith('.json') || filename.toLowerCase().replace('.gz', '').endsWith('.json')) {
+                            try {
+                                const parsed = JSON.parse(text);
+                                formattedText = JSON.stringify(parsed, null, 2);
+                                textColor = 'text-green-300';
+                            } catch (e) {
+                            }
+                        }
+
+                        contentArea.innerHTML = `<pre class="whitespace-pre-wrap p-4 bg-gray-800 rounded-lg ${textColor}">${formattedText}</pre>`;
+                    })
+                    .catch(error => {
+                        contentArea.innerHTML = `<p class="text-center py-10 text-red-500">Error viewing file: ${error.message}. It might be a non-text file or an unsupported format.</p>`;
+                        console.error("View File Error:", error);
+                    });
+                return;
+            }
+
+            contentArea.classList.add('items-center', 'justify-center'); 
+            contentArea.innerHTML = `<p class="text-center py-10 text-red-500">
+                File type **${fileType}** is not supported for inline viewing yet. 
+                <br>Please download the file directly from the storage folder.
+            </p>`;
+        }
+        
+        // --- Final Initialization (More robust DOMContentLoaded listener) ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 1. Draw the header (buttons and search)
+            updateHeader(null); 
+            
+            // 2. Load dashboard content
             loadRecentFiles();
             loadDashboardStats(); 
             
-            // Set up interval for real-time stats update (every 5 seconds)
+            // 3. Set up interval for stats update
             setInterval(loadDashboardStats, 5000);
-        };
+        });
     </script>
 </body>
 </html>

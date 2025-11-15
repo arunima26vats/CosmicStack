@@ -6,8 +6,6 @@
     <title>StorageAI - Intelligent Storage System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
     <style>
         /* Custom Tailwind Configuration for Purple Accent */
         :root {
@@ -58,8 +56,18 @@
         </div>
         
         <div id="authContainer" class="flex items-center space-x-4">
+            <div class="relative flex items-center">
+                <input type="text" id="search_input" placeholder="Search files..." 
+                        class="bg-card p-2 pl-4 rounded-full border border-gray-600 focus:border-purple focus:ring-1 focus:ring-purple text-sm w-48 transition-all duration-300 pr-10"
+                        onkeydown="if(event.key === 'Enter') handleSearch()">
+                
+                <button onclick="startVoiceSearch()" 
+                        class="absolute right-0 top-0 h-full w-10 text-gray-400 hover:text-purple transition duration-150 rounded-r-full flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7 4a3 3 0 00-3 3v2a3 3 0 003 3h2a3 3 0 003-3V7a3 3 0 00-3-3H7zm4 10.882A6 6 0 007 14a6 6 0 00-4 4.882V20h14v-1.118zM14 7h1a3 3 0 013 3v2a3 3 0 01-3 3h-1v-2h2a1 1 0 001-1V7h-1zm-3-3H7a3 3 0 00-3 3v2a3 3 0 003 3h2a3 3 0 003-3V7a3 3 0 00-3-3z" clip-rule="evenodd"></path></svg>
+                </button>
             </div>
-    </header>
+        </div>
+        </header>
 
     <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -70,35 +78,46 @@
                 <p class="text-sm text-gray-400 mb-6">Drag and drop files here or click to browse. Supports all file types with intelligent categorization.</p>
 
                 <form id="uploadForm" onsubmit="handleSubmission(event)" class="w-full space-y-4">
-    <input type="file" name="file" id="file_input" 
-                class="block w-full text-sm text-gray-500 file-input-theme cursor-pointer">
+                    <input type="file" name="file" id="file_input" 
+                        class="block w-full text-sm text-gray-500 file-input-theme cursor-pointer">
 
-    <textarea name="json_data" rows="5" 
-                placeholder="OR paste your structured JSON data here." 
-                class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm 
-                        focus:ring-purple focus:border-purple">
-    </textarea>
+                    <textarea name="json_data" rows="5" 
+                        placeholder="OR paste your structured JSON data here." 
+                        class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm 
+                                focus:ring-purple focus:border-purple">
+                    </textarea>
 
-    <input type="text" name="metadata_comment" 
-                placeholder="Optional Metadata Comment (e.g., 'Relational')" 
-                class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm 
-                         focus:ring-purple focus:border-purple">
+                    <input type="text" name="metadata_comment" 
+                        placeholder="Optional Metadata Comment (e.g., 'Relational')" 
+                        class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg text-sm 
+                                focus:ring-purple focus:border-purple">
 
-    <div class="flex items-center justify-center space-x-2 text-sm text-gray-400 mt-3">
-        <input type="checkbox" name="auto_compress" id="auto_compress" 
-                class="form-checkbox h-5 w-5 rounded bg-card text-purple 
-                         border-gray-600 focus:ring-purple">
-        <label for="auto_compress" class="cursor-pointer">
-            Auto-compress to save space?
-        </label>
-    </div>
+                    <div class="flex items-center justify-center space-x-2 text-sm text-gray-400 mt-3">
+                        <input type="checkbox" name="auto_compress" id="auto_compress" 
+                                class="form-checkbox h-5 w-5 rounded bg-card text-purple 
+                                        border-gray-600 focus:ring-purple">
+                        <label for="auto_compress" class="cursor-pointer">
+                            Auto-compress to save space?
+                        </label>
+                    </div>
 
-    <button type="submit"
-                        class="w-full bg-purple text-white py-3 rounded-lg font-bold 
-                               hover:bg-[#8A2BE2] transition duration-200 shadow-purple mt-4">
-        Analyze and Store
-    </button>
-</form>
+                    <button type="submit"
+                            class="w-full bg-purple text-white py-3 rounded-lg font-bold 
+                                hover:bg-[#8A2BE2] transition duration-200 shadow-purple mt-4">
+                        Analyze and Store
+                    </button>
+                </form>
+                
+                <div class="mt-6 w-full flex justify-between space-x-2">
+                    <button onclick="openCamera(false)"
+                            class="flex-1 bg-gray-600/50 text-white py-2 rounded-lg text-sm hover:bg-gray-600 transition">
+                        <span class="text-lg">📷</span> Photo Capture
+                    </button>
+                    <button onclick="openCamera(true)"
+                            class="flex-1 bg-gray-600/50 text-white py-2 rounded-lg text-sm hover:bg-gray-600 transition">
+                        <span class="text-lg">📄</span> Document OCR
+                    </button>
+                </div>
 
             </div>
         </div>
@@ -144,82 +163,31 @@
         </div>
     </main>
 
-    <div id="authModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center modal-fade-enter">
-        <div id="authPanel" class="bg-card p-8 rounded-xl w-full max-w-md shadow-2xl relative">
+    <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex flex-col items-center justify-center">
+        <div class="p-6 rounded-xl bg-card shadow-lg w-11/12 md:w-2/3 lg:w-1/2">
+            <h2 id="cameraTitle" class="text-2xl font-semibold mb-4 text-purple">Direct Capture</h2>
             
-            <button onclick="closeFileViewer()"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-white transition duration-150">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            
-            <h2 id="authTitle" class="text-3xl font-bold mb-6 text-center text-purple">Sign In</h2>
-            
-            <div class="mb-6 border-b border-gray-700 pb-6 text-center">
-                <div id="g_id_onload"
-                    data-client_id="YOUR_GOOGLE_CLIENT_ID" 
-                    data-callback="handleCredentialResponse"
-                    data-auto_prompt="false">
-                </div>
-                <div class="g_id_signin"
-                    data-type="standard"
-                    data-size="large"
-                    data-theme="outline"
-                    data-text="sign_in_with"
-                    data-shape="pill"
-                    data-logo_alignment="left">
-                </div>
-                <p class="text-xs text-gray-500 mt-4">OR use your email and password below</p>
-            </div>
-            <form id="signInForm" onsubmit="handleAuthSubmit(event, 'signin')" class="space-y-4">
-                <div>
-                    <label for="signin_email" class="block text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="signin_email" name="email" required
-                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
-                </div>
-                <div>
-                    <label for="signin_password" class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="signin_password" name="password" required
-                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
-                </div>
-                <button type="submit"
-                        class="w-full bg-purple text-white py-3 rounded-lg font-bold hover:bg-[#8A2BE2] transition duration-200 shadow-purple">
-                    Sign In to StorageAI
-                </button>
-            </form>
-            
-            <form id="signUpForm" onsubmit="handleAuthSubmit(event, 'signup')" class="space-y-4 hidden">
-                <div>
-                    <label for="signup_username" class="block text-sm font-medium mb-1">Username</label>
-                    <input type="text" id="signup_username" name="username" required
-                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
-                </div>
-                <div>
-                    <label for="signup_email" class="block text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="signup_email" name="email" required
-                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
-                </div>
-                <div>
-                    <label for="signup_password" class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="signup_password" name="password" required
-                           class="w-full p-3 bg-[#1A1A2E] border border-gray-600 rounded-lg focus:ring-purple focus:border-purple">
-                </div>
-                <button type="submit"
-                        class="w-full bg-purple text-white py-3 rounded-lg font-bold hover:bg-[#8A2BE2] transition duration-200 shadow-purple">
-                    Create Account
-                </button>
-            </form>
-
-            <div class="mt-6 text-center text-sm">
-                <p id="toggleText">
-                    Don't have an account? 
-                    <button type="button" onclick="toggleAuthMode('signup')" class="text-purple font-semibold hover:underline">
-                        Sign Up
-                    </button>
-                </p>
+            <video id="videoStream" class="w-full h-auto bg-black rounded-lg mb-4" autoplay></video>
+            <canvas id="captureCanvas" class="hidden"></canvas>
+            <div id="captureArea" class="hidden flex flex-col items-center justify-center">
+                    <img id="capturedImage" class="w-full h-auto rounded-lg mb-4 hidden border-2 border-purple" />
+                    <p class="text-sm text-gray-400 mb-2">Image captured. Click Send to store.</p>
             </div>
             
+            <div class="flex justify-between">
+                <button id="captureButton" onclick="takePhoto()" class="bg-purple text-white py-2 px-6 rounded-lg font-bold hover:bg-[#8000FF] transition duration-200">
+                    <span class="text-lg">📸</span> Capture
+                </button>
+                <button id="sendButton" onclick="sendCapturedData()" class="bg-green-500 text-white py-2 px-6 rounded-lg font-bold hover:bg-green-600 transition duration-200 hidden">
+                    <span class="text-sm">⬆️</span> Send to StorageAI
+                </button>
+                <button onclick="closeCamera()" class="bg-gray-700 text-white py-2 px-6 rounded-lg font-bold hover:bg-gray-600 transition duration-200">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
+    
     <div id="fileViewerModal" class="fixed inset-0 z-50 bg-black bg-opacity-80 backdrop-blur-sm hidden p-6">
         <div class="bg-dark-bg w-full max-w-5xl mx-auto h-full rounded-xl shadow-purple overflow-hidden flex flex-col">
             <div class="p-4 bg-card flex justify-between items-center border-b border-gray-700">
@@ -235,167 +203,135 @@
     </div>
 
     <script>
-        // --- AUTHENTICATION JS FUNCTIONS (RESTORED) ---
-
-        // Google Sign-In Callback
-        function handleCredentialResponse(response) {
-            console.log("Google ID Token received:", response.credential);
-            
-            fetch('/api/google_signin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: response.credential }),
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(`Google Sign-In Successful! Welcome, ${data.username}!`);
-                    document.getElementById('authModal').classList.add('hidden');
-                    updateHeader(data.username); 
-                    loadRecentFiles(); 
-                    loadDashboardStats();
-                } else {
-                    alert(`Google Sign-In Failed: ${data.message}. Check backend verification.`);
-                }
-            })
-            .catch(error => {
-                alert("Error communicating with backend for Google Sign-In.");
-                console.error('Google Auth Error:', error);
-            });
-        }
+        // --- AUTHENTICATION JS FUNCTIONS (Simplified for Demo) ---
         
-        // Standard Email/Password Submission
-        async function handleAuthSubmit(event, endpoint) {
-            event.preventDefault(); 
-            const formId = endpoint === 'signin' ? 'signInForm' : 'signUpForm';
-            const form = document.getElementById(formId);
-            const submitButton = form.querySelector('button[type="submit"]');
+        // Simplified Header Management: ONLY handles the appearance (no auth logic)
+        function updateHeader(username = null) {
+             // Since the search bar HTML is hardcoded in the body, this function only needs to be called
+             // to ensure the DOMContentLoaded setup is clean. We do not need complex logic here anymore.
+        }
 
-            const data = {};
-            const formData = new FormData(form);
-            for (let [key, value] of formData.entries()) { data[key] = value; }
+        // --- CAMERA & CAPTURE LOGIC (Unchanged) ---
+        let stream = null;
+        let isOCRAttempt = false;
 
-            if (endpoint === 'signup' && data.password.length < 6) {
-                alert("Password must be at least 6 characters long.");
-                return;
-            }
+        function openCamera(isOcr) {
+            isOCRAttempt = isOcr;
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('videoStream');
+            const captureArea = document.getElementById('captureArea');
+            const capturedImage = document.getElementById('capturedImage');
+            const captureButton = document.getElementById('captureButton');
+            const sendButton = document.getElementById('sendButton');
+            const title = document.getElementById('cameraTitle');
 
-            const originalButtonText = submitButton.textContent;
-            submitButton.textContent = 'Processing...';
-            submitButton.disabled = true;
+            // Reset view
+            video.style.display = 'block';
+            captureArea.style.display = 'none';
+            capturedImage.style.display = 'none';
+            sendButton.classList.add('hidden');
+            captureButton.style.display = 'block';
 
-            try {
-                const response = await fetch(`/api/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
+            title.textContent = isOcr ? "Document OCR Scan" : "Direct Media Capture (Photo/Video)";
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: isOcr ? false : true })
+                .then(s => {
+                    stream = s;
+                    video.srcObject = stream;
+                    modal.classList.remove('hidden');
+                })
+                .catch(err => {
+                    alert("Error accessing camera. Please ensure your camera is connected and allowed.");
+                    console.error("Camera access error:", err);
+                    modal.classList.add('hidden');
                 });
-                const result = await response.json();
+        }
 
-                if (response.ok && result.status === 'success') {
-                    alert(`${result.message} Welcome, ${result.username}!`);
-                    document.getElementById('authModal').classList.add('hidden');
-                    updateHeader(result.username); 
+        function closeCamera() {
+            const modal = document.getElementById('cameraModal');
+            modal.classList.add('hidden');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            stream = null;
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('videoStream');
+            const canvas = document.getElementById('captureCanvas');
+            const capturedImage = document.getElementById('capturedImage');
+            const sendButton = document.getElementById('sendButton');
+            const captureButton = document.getElementById('captureButton');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9); 
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            
+            capturedImage.src = dataURL;
+            capturedImage.style.display = 'block';
+            sendButton.classList.remove('hidden');
+            captureButton.style.display = 'none';
+        }
+
+        function sendCapturedData() {
+            const canvas = document.getElementById('captureCanvas');
+            
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                
+                const fileName = isOCRAttempt ? 'ocr_scan.jpg' : 'captured_media.jpg';
+                formData.append('file', blob, fileName);
+
+                formData.append('metadata_comment', isOCRAttempt ? 'ocr_scan_request' : 'direct_capture');
+                
+                const resultArea = document.getElementById('result');
+                resultArea.textContent = `Analyzing and Storing captured data (${isOCRAttempt ? 'OCR' : 'Media'})...`;
+                resultArea.classList.remove('text-green-300', 'text-red-500'); 
+                resultArea.classList.add('text-yellow-400'); 
+                
+                fetch('/api/store', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    resultArea.textContent = JSON.stringify(data, null, 4); 
+                    resultArea.classList.remove('text-yellow-400');
+                    data.status === 'error' ? resultArea.classList.add('text-red-500') : resultArea.classList.add('text-green-300');
+                    
                     loadRecentFiles(); 
                     loadDashboardStats();
-                } else {
-                    alert(`Authentication Failed: ${result.message}`);
-                }
-            } catch (error) {
-                alert("Network Error: Could not connect to the authentication server.");
-                console.error('Auth Fetch Error:', error);
-            } finally {
-                submitButton.textContent = originalButtonText;
-                submitButton.disabled = false;
-            }
+                    closeCamera();
+                })
+                .catch(error => {
+                    resultArea.textContent = 'An error occurred during capture submission.';
+                    resultArea.classList.remove('text-yellow-400');
+                    resultArea.classList.add('text-red-500'); 
+                    console.error('Fetch Error:', error);
+                });
+                
+            }, 'image/jpeg');
         }
 
-        // Header Management: Draws Sign In/Up or Welcome/Logout buttons
-        function updateHeader(username = null) {
-            const authContainer = document.getElementById('authContainer');
-            
-            if (username) {
-                authContainer.innerHTML = `
-                    <input type="text" placeholder="Search files..." class="bg-card p-2 rounded-lg border border-gray-600 focus:border-purple focus:ring-1 focus:ring-purple text-sm w-48">
-                    <span class="text-white font-semibold">Welcome, ${username}</span>
-                    <button onclick="handleLogout()" 
-                        class="bg-purple text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#8A2BE2] transition duration-150 shadow-purple">
-                        Logout
-                    </button>
-                `;
-            } else {
-                authContainer.innerHTML = `
-                    <input type="text" placeholder="Search files..." class="bg-card p-2 rounded-lg border border-gray-600 focus:border-purple focus:ring-1 focus:ring-purple text-sm w-48">
-                    <button onclick="openAuthModal('signin')" 
-                        class="bg-transparent text-purple py-2 px-4 rounded-lg font-semibold border border-purple hover:bg-purple/10 transition duration-150">
-                        Sign In
-                    </button>
-                    <button onclick="openAuthModal('signup')" 
-                        class="bg-purple text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#8A2BE2] transition duration-150 shadow-purple">
-                        Sign Up
-                    </button>
-                `;
-            }
-        }
 
-        // Logout API Call
-        async function handleLogout() {
-            try {
-                const response = await fetch('/api/logout', { method: 'POST' });
-                if (response.ok) {
-                    alert("You have been successfully logged out.");
-                    updateHeader(null); 
-                } else {
-                    alert("Logout failed.");
-                }
-            } catch (error) {
-                alert("Network Error: Could not log out.");
-                console.error('Logout Fetch Error:', error);
-            }
-        }
+        // --- FILE VIEWER FUNCTIONS (CORRECTED) ---
 
-        // Modal Open
-        function openAuthModal(mode) {
-            const modal = document.getElementById('authModal');
-            modal.classList.remove('hidden');
-            const authPanel = document.getElementById('authPanel');
-            authPanel.classList.remove('modal-fade-enter');
-            authPanel.classList.add('modal-fade-enter-active');
-            toggleAuthMode(mode);
-        }
-
-        // Modal Toggle (Sign In / Sign Up)
-        function toggleAuthMode(mode) {
-            const title = document.getElementById('authTitle');
-            const signInForm = document.getElementById('signInForm');
-            const signUpForm = document.getElementById('signUpForm');
-            const toggleText = document.getElementById('toggleText');
-
-            if (mode === 'signin') {
-                title.textContent = 'Sign In';
-                signInForm.classList.remove('hidden');
-                signUpForm.classList.add('hidden');
-                toggleText.innerHTML = `Don't have an account? 
-                    <button type="button" onclick="toggleAuthMode('signup')" class="text-purple font-semibold hover:underline">
-                        Sign Up
-                    </button>`;
-            } else if (mode === 'signup') {
-                title.textContent = 'Sign Up';
-                signInForm.classList.add('hidden');
-                signUpForm.classList.remove('hidden');
-                toggleText.innerHTML = `Already have an account? 
-                    <button type="button" onclick="toggleAuthMode('signin')" class="text-purple font-semibold hover:underline">
-                        Sign In
-                    </button>`;
-            }
-        }
-
-        // --- File Viewer Functions (Unchanged) ---
+        // Function to close the file viewer modal (Unchanged)
         function closeFileViewer() {
             document.getElementById('fileViewerModal').classList.add('hidden');
             document.getElementById('modalContent').innerHTML = 'Loading file content...';
         }
 
+        // Function to open the file viewer modal and fetch content (FINAL FIX)
         function openFileViewer(pathInfo, filename, fileType) {
             const modal = document.getElementById('fileViewerModal');
             const title = document.getElementById('modalTitle');
@@ -406,49 +342,82 @@
             contentArea.classList.add('items-center', 'justify-center');
             modal.classList.remove('hidden');
 
-            const viewApiUrl = `/api/view_file/${pathInfo}`;
+            // FIX: Encode pathInfo to handle special characters (e.g., spaces and slashes)
+            const encodedPathInfo = encodeURIComponent(pathInfo);
+            const viewApiUrl = `/api/view_file/${encodedPathInfo}`;
+
+            // Determine the true file extension, stripping .gz if present
+            const isCompressed = filename.toLowerCase().endsWith('.gz');
+            const trueFilename = isCompressed ? filename.slice(0, -3) : filename;
+            const trueExt = trueFilename.split('.').pop().toLowerCase();
             
-            if (fileType === 'Image') {
+            // Helper to check for common image/video extensions
+            const isImage = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(trueExt);
+            const isVideo = ['mp4', 'mov', 'webm'].includes(trueExt);
+            const isPdf = (trueExt === 'pdf');
+
+
+            // --- 1. Handle Images ---
+            if (isImage) {
                 contentArea.classList.remove('items-center', 'justify-center');
+                // The browser will handle decompression/MIME type based on the backend's response headers.
                 contentArea.innerHTML = `<img src="${viewApiUrl}" alt="${filename}" class="max-h-full max-w-full object-contain mx-auto">`;
                 return;
             } 
             
-            if (fileType === 'Document' && filename.toLowerCase().endsWith('.pdf')) {
+            // --- 2. Handle PDFs ---
+            if (isPdf) {
                 contentArea.classList.remove('items-center', 'justify-center');
+                // Use iframe for native PDF rendering
                 contentArea.innerHTML = `<iframe src="${viewApiUrl}" class="w-full h-full" style="min-height: 500px;" frameborder="0"></iframe>`;
                 return;
             } 
+
+            // --- 2.5 Handle Videos ---
+            if (isVideo) {
+                contentArea.classList.remove('items-center', 'justify-center');
+                // The browser handles playback based on the backend's response headers.
+                contentArea.innerHTML = `<video controls class="w-full h-auto max-w-full" src="${viewApiUrl}">
+                                            Your browser does not support the video tag.
+                                        </video>`;
+                return;
+            }
             
-            if (fileType === 'JSON' || fileType === 'Document' || fileType === 'Other' || fileType === 'Archive') {
+            // --- 3. Handle Text-Based Content (JSON, TXT, GZ, etc.) ---
+            // Fetch the content and display as pre-formatted text.
+            if (fileType === 'JSON' || fileType === 'Document' || fileType === 'Other' || fileType === 'Archive' || isCompressed) {
                 fetch(viewApiUrl)
                     .then(response => {
+                        // Crucial: Server needs to handle decompression and return plain text (or JSON text)
                         if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
-                        return response.text();
+                        // Important: Since the file type is non-image/video/pdf, read as text
+                        return response.text(); 
                     })
                     .then(text => {
                         contentArea.classList.remove('items-center', 'justify-center');
                         let formattedText = text;
                         let textColor = 'text-gray-300';
                         
-                        if (fileType === 'JSON' || filename.toLowerCase().endsWith('.json') || filename.toLowerCase().replace('.gz', '').endsWith('.json')) {
+                        if (trueExt === 'json') {
                             try {
                                 const parsed = JSON.parse(text);
                                 formattedText = JSON.stringify(parsed, null, 2);
                                 textColor = 'text-green-300';
                             } catch (e) {
+                                // Keep raw text if JSON parsing fails
                             }
                         }
 
                         contentArea.innerHTML = `<pre class="whitespace-pre-wrap p-4 bg-gray-800 rounded-lg ${textColor}">${formattedText}</pre>`;
                     })
                     .catch(error => {
-                        contentArea.innerHTML = `<p class="text-center py-10 text-red-500">Error viewing file: ${error.message}. It might be a non-text file or an unsupported format.</p>`;
+                        contentArea.innerHTML = `<p class="text-center py-10 text-red-500">Error viewing file: ${error.message}. It might be a non-text file or an unsupported format (Status 404 implies file not found or path error).</p>`;
                         console.error("View File Error:", error);
                     });
                 return;
             }
 
+            // --- 4. Fallback for Unsupported Media Types ---
             contentArea.classList.add('items-center', 'justify-center'); 
             contentArea.innerHTML = `<p class="text-center py-10 text-red-500">
                 File type **${fileType}** is not supported for inline viewing yet. 
@@ -456,11 +425,11 @@
             </p>`;
         }
         
-        // --- Dashboard Functions (Unchanged) ---
+        // --- DASHBOARD AND UTILITY FUNCTIONS ---
         function getIconPath(fileType) {
             switch(fileType) {
                 case 'Document': return 'M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm6 10a1 1 0 100-2 1 1 0 000 2z';
-                case 'Image': return 'M10 4a3 3 0 100 6 3 3 0 000-6zM3 17a1 1 0 01-1-1V4a1 1 0 011-1h14a1 1 0 011 1v12a1 1 0 01-1 1H3z';
+                case 'Image': return 'M10 4a3 3 0 100 6 3 3 0 000-6zM3 17a1 1 0 01-1-1V4a1 1 0 011-3h14a1 1 0 011 1v12a1 1 0 01-1 1H3z';
                 case 'Video': return 'M15 10l-4 4V6l4 4zM2 17a1 1 0 011-1h14a1 1 0 011 1H2z';
                 case 'Audio': return 'M9 13H5a1 1 0 01-1-1V8a1 1 0 011-1h4l4-4v14l-4-4z';
                 case 'Archive': return 'M5 16a2 2 0 01-2-2v-4a2 2 0 012-2h10a2 2 0 012 2v4a2 2 0 01-2 2H5zm0 2a2 2 0 002 2h6a2 2 0 002-2v-2a2 2 0 00-2-2H7a2 2 0 00-2 2v2z';
@@ -469,10 +438,19 @@
             }
         }
         
+        // --- START CORRECTION for Compressed File Display ---
         function createFileCardHTML(file) {
             const iconPath = getIconPath(file.type);
             const timeAgo = file.category.replace(/_/g, ' '); 
             
+            // FIX: Display name without .gz if it exists, for cleaner UI
+            let displayName = file.name;
+            if (displayName.toLowerCase().endsWith('.gz')) {
+                displayName = displayName.slice(0, -3);
+                // Optionally add a visual indicator for compressed files
+                displayName = `📦 ${displayName}`;
+            }
+
             return `
                 <div class="bg-card p-4 rounded-xl flex items-center shadow-md border border-gray-700 hover:border-purple transition duration-150 cursor-pointer" 
                     onclick="openFileViewer('${file.server_path_info}', '${file.name}', '${file.type}')">
@@ -480,12 +458,13 @@
                         <svg class="w-6 h-6 text-purple" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="${iconPath}" clip-rule="evenodd"></path></svg>
                     </div>
                     <div>
-                        <p class="font-semibold">${file.name}</p>
+                        <p class="font-semibold">${displayName}</p>
                         <p class="text-xs text-gray-400">${file.size} • ${timeAgo}</p>
                     </div>
                 </div>
             `;
         }
+        // --- END CORRECTION for Compressed File Display ---
 
         function loadDashboardStats() {
             fetch('/api/stats')
@@ -571,82 +550,110 @@
         }
 
 
-        // --- File Viewer Functions (Unchanged) ---
-        function closeFileViewer() {
-            document.getElementById('fileViewerModal').classList.add('hidden');
-            document.getElementById('modalContent').innerHTML = 'Loading file content...';
+        // ADDED: SEARCH & VOICE SEARCH FUNCTIONS
+        // -------------------------------------
+        function updateSearchPlaceholder(text) {
+            const input = document.getElementById('search_input');
+            input.placeholder = text;
+            setTimeout(() => { 
+                input.placeholder = 'Search files...';
+                if (input.value === '') input.focus();
+            }, 3000);
         }
 
-        function openFileViewer(pathInfo, filename, fileType) {
-            const modal = document.getElementById('fileViewerModal');
-            const title = document.getElementById('modalTitle');
-            const contentArea = document.getElementById('modalContent');
-            
-            title.textContent = `Viewing: ${filename}`;
-            contentArea.innerHTML = '<p class="text-center py-10 text-yellow-400">Fetching and preparing file...</p>';
-            contentArea.classList.add('items-center', 'justify-center');
-            modal.classList.remove('hidden');
-
-            const viewApiUrl = `/api/view_file/${pathInfo}`;
-            
-            if (fileType === 'Image') {
-                contentArea.classList.remove('items-center', 'justify-center');
-                contentArea.innerHTML = `<img src="${viewApiUrl}" alt="${filename}" class="max-h-full max-w-full object-contain mx-auto">`;
-                return;
-            } 
-            
-            if (fileType === 'Document' && filename.toLowerCase().endsWith('.pdf')) {
-                contentArea.classList.remove('items-center', 'justify-center');
-                contentArea.innerHTML = `<iframe src="${viewApiUrl}" class="w-full h-full" style="min-height: 500px;" frameborder="0"></iframe>`;
-                return;
-            } 
-            
-            if (fileType === 'JSON' || fileType === 'Document' || fileType === 'Other' || fileType === 'Archive') {
-                fetch(viewApiUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`Server returned status: ${response.status}`);
-                        return response.text();
-                    })
-                    .then(text => {
-                        contentArea.classList.remove('items-center', 'justify-center');
-                        let formattedText = text;
-                        let textColor = 'text-gray-300';
-                        
-                        if (fileType === 'JSON' || filename.toLowerCase().endsWith('.json') || filename.toLowerCase().replace('.gz', '').endsWith('.json')) {
-                            try {
-                                const parsed = JSON.parse(text);
-                                formattedText = JSON.stringify(parsed, null, 2);
-                                textColor = 'text-green-300';
-                            } catch (e) {
-                            }
-                        }
-
-                        contentArea.innerHTML = `<pre class="whitespace-pre-wrap p-4 bg-gray-800 rounded-lg ${textColor}">${formattedText}</pre>`;
-                    })
-                    .catch(error => {
-                        contentArea.innerHTML = `<p class="text-center py-10 text-red-500">Error viewing file: ${error.message}. It might be a non-text file or an unsupported format.</p>`;
-                        console.error("View File Error:", error);
-                    });
+        async function handleSearch() {
+            const query = document.getElementById('search_input').value.trim();
+            if (query === '') {
+                updateSearchPlaceholder("Please enter a query or use voice search.");
+                loadRecentFiles(); // Reload default list if search is empty
                 return;
             }
 
-            contentArea.classList.add('items-center', 'justify-center'); 
-            contentArea.innerHTML = `<p class="text-center py-10 text-red-500">
-                File type **${fileType}** is not supported for inline viewing yet. 
-                <br>Please download the file directly from the storage folder.
-            </p>`;
+            // Show loading state
+            const container = document.getElementById('recentFilesContainer');
+            container.innerHTML = `<p class="col-span-2 text-center text-yellow-400">Searching for files matching: **${query}**...</p>`;
+
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    container.innerHTML = `<p class="col-span-2 text-center text-red-500">Search Error: ${data.error}</p>`;
+                    return;
+                }
+
+                if (data.results && data.results.length > 0) {
+                    container.innerHTML = ''; 
+                    data.results.forEach(file => {
+                        // Re-use the existing file card creation function
+                        container.innerHTML += createFileCardHTML(file);
+                    });
+                } else {
+                    container.innerHTML = `<p class="col-span-2 text-center text-gray-500">No files found matching **${query}**.</p>`;
+                }
+
+            } catch (error) {
+                container.innerHTML = '<p class="col-span-2 text-center text-red-500">Network failed during search API call.</p>';
+                console.error('Search Fetch Error:', error);
+            }
         }
         
-        // --- Final Initialization (More robust DOMContentLoaded listener) ---
-        document.addEventListener('DOMContentLoaded', (event) => {
-            // 1. Draw the header (buttons and search)
-            updateHeader(null); 
+        function startVoiceSearch() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Voice search is not supported in this browser. Please use Chrome or a modern, compatible browser.");
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = false; // Only capture a single phrase
+            recognition.lang = 'en-US'; 
+            recognition.interimResults = false; 
+            recognition.maxAlternatives = 1;
+
+            const searchInput = document.getElementById('search_input');
+            searchInput.value = ''; // Clear input before listening
+            updateSearchPlaceholder("👂 Listening... Speak your query now.");
             
-            // 2. Load dashboard content
-            loadRecentFiles();
+            // On recognition result
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                searchInput.value = transcript;
+                updateSearchPlaceholder("🗣️ Recognized. Searching...");
+                handleSearch(); // Execute search with the voice result
+            };
+
+            // On recognition start
+            recognition.onstart = () => {
+                // Change the microphone icon temporarily if desired (e.g., to a pulsating circle)
+                // For simplicity, we rely on the placeholder update.
+            };
+
+            // On recognition end (Success or Failure)
+            recognition.onend = () => {
+                if (searchInput.value === '') {
+                    updateSearchPlaceholder("No speech recognized. Try again.");
+                }
+            };
+            
+            // On error
+            recognition.onerror = (event) => {
+                console.error('Speech Recognition Error:', event.error);
+                updateSearchPlaceholder(`Voice error: ${event.error}`);
+            };
+
+            recognition.start();
+        }
+
+        // --- End Search Functions ---
+
+        // --- Final Initialization ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 1. Load initial dashboard data (Simplified to direct load)
+            updateHeader(); // Renders the search bar
+            loadRecentFiles(); 
             loadDashboardStats(); 
             
-            // 3. Set up interval for stats update
+            // 2. Set up interval for stats update
             setInterval(loadDashboardStats, 5000);
         });
     </script>

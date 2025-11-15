@@ -1,6 +1,9 @@
+# logic_structured.py
 import json
 import os
 import gzip
+import hashlib
+from datetime import datetime
 
 def has_nested_complexity(data):
     """
@@ -27,7 +30,7 @@ def generate_sql_schema_and_types(data):
     schema = {}
     
     for key, value in item.items():
-        # Simple Type Guessing (Highly effective for MVP)
+        # Simple Type Guessing
         if isinstance(value, int):
             db_type = "INTEGER"
         elif isinstance(value, float):
@@ -35,11 +38,11 @@ def generate_sql_schema_and_types(data):
         elif isinstance(value, bool):
             db_type = "BOOLEAN"
         elif isinstance(value, str):
-            # Check for potential date/time format (Advanced for time crunch)
-            if any(x in value.lower() for x in ["date", "time", "created_at"]):
-                 db_type = "TIMESTAMP"
+            # Check for potential date/time format
+            if any(x in key.lower() for x in ["date", "time", "created_at", "timestamp"]):
+                db_type = "TIMESTAMP"
             else:
-                 db_type = "VARCHAR(255)"
+                db_type = "VARCHAR(255)"
         else:
             db_type = "TEXT" # Fallback for odd types
         
@@ -47,39 +50,36 @@ def generate_sql_schema_and_types(data):
         
     # Construct a mock SQL CREATE TABLE statement
     columns = [f"{k} {v}" for k, v in schema.items()]
-    table_name = next(iter(item.keys())) + "_table" # Simple table naming
+    # Simple table naming: Use hash if data keys are generic, or a custom name
+    table_name = "analyzed_table_" + hashlib.sha1(json.dumps(item, sort_keys=True).encode()).hexdigest()[:6]
     
     return f"CREATE TABLE {table_name} (ID INTEGER PRIMARY KEY, " + ", ".join(columns) + ");"
 
 
 def process_json_data(data, metadata_comment, base_dir, auto_compress=False):
-    """Intelligently determines storage type and generates schema/collection."""
+    """
+    Intelligently determines storage type (SQL/NoSQL), generates schema/collection 
+    info, and saves the file.
+    """
     
-    # 1. Force Check (Highest priority for hackathon demo)
+    # 1. Determine Storage Choice (Decision Logic)
+    storage_choice = "SQL (Heuristic: Flat/Homogeneous)" # Default assumption
+    
     if "relational" in metadata_comment.lower():
         storage_choice = "SQL (Forced by Comment)"
     elif "document" in metadata_comment.lower() or "flexible" in metadata_comment.lower():
         storage_choice = "NoSQL (Forced by Comment)"
-    
-    # 2. Heuristic Check (The core intelligence)
     elif has_nested_complexity(data):
         storage_choice = "NoSQL (Heuristic: Nested Complexity)"
-    else:
-        storage_choice = "SQL (Heuristic: Flat/Homogeneous)"
 
-    # --- Result Generation (NOW SAVES FILE) ---
+    # 2. Prepare Storage Metadata
     
-    db_entity_name = "unknown_entity"
+    # Generate a consistent name for the file/entity
+    file_hash = hashlib.sha1(json.dumps(data, sort_keys=True).encode()).hexdigest()[:10]
     
-    try:
-        if isinstance(data, list) and data:
-            db_entity_name = next(iter(data[0].keys())) + "_collection"
-        elif isinstance(data, dict):
-            db_entity_name = next(iter(data.keys())) + "_collection"
-    except Exception:
-        pass # Keep default name
-        
-    target_dir_name = "structured_data"
+    db_entity_name = f"data_batch_{datetime.now().strftime('%Y%m%d%H%M')}_{file_hash}"
+    
+    target_dir_name = "Structured_JSON"
     final_dir = os.path.join(base_dir, target_dir_name)
     os.makedirs(final_dir, exist_ok=True)
     
@@ -94,7 +94,7 @@ def process_json_data(data, metadata_comment, base_dir, auto_compress=False):
         schema_output = "No fixed schema required (Document-based storage)."
         intelligence_action = f"Designated for NoSQL Collection **{db_entity_name}**."
 
-    # Now, save the file (compressed or not)
+    # 3. Save the File (Compressed or not)
     if auto_compress:
         filename += ".gz"
         final_path = os.path.join(final_dir, filename)
@@ -115,7 +115,8 @@ def process_json_data(data, metadata_comment, base_dir, auto_compress=False):
             intelligence_action += " Data stored as plain JSON."
         except Exception as e:
             return {"status": "error", "message": f"Failed to write file: {e}"}
-        
+            
+    # Return the full result
     return {
         "status": "success",
         "type": "Structured JSON",

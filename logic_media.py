@@ -1,0 +1,112 @@
+from PIL import Image
+import os
+import numpy as np
+from werkzeug.utils import secure_filename
+
+# --- GLOBAL Metadata Database (Allows "learning" new categories during runtime) ---
+# NOTE: In a production system, this would be loaded from a persistent DB.
+global EXISTING_CATEGORIES
+EXISTING_CATEGORIES = {
+    "photos_of_people": ["face", "portrait", "selfie"],
+    "documents": ["text", "invoice", "receipt"],
+    "nature_and_landscapes": ["green", "blue", "sky", "water"]
+}
+# ----------------------------------------------------------------
+
+def analyze_image_for_tags(filepath):
+    """Generates simple tags based on image properties (MVP Intelligence)"""
+    # Check if the file is likely a media file (if it's not a standard image, skip PIL analysis)
+    ext = filepath.split('.')[-1].lower()
+    if ext not in ['jpg', 'jpeg', 'png', 'webp']:
+         # Treat it as a document or general file if PIL can't handle it
+        return ["document", "text"] 
+        
+    try:
+        img = Image.open(filepath)
+        tags = []
+        
+        # Heuristic 1: Aspect Ratio for "Portrait" vs "Landscape"
+        width, height = img.size
+        if height / width > 1.2:
+            tags.append("portrait")
+        elif width / height > 1.2:
+            tags.append("landscape")
+        
+        # Heuristic 2: Check for average colors (Simple Content Analysis)
+        # Convert a small sample to numpy array for fast calculation
+        small_img = img.resize((50, 50)).convert('RGB')
+        avg_color = np.array(small_img).mean(axis=(0, 1))
+        
+        if avg_color[0] > 180 and avg_color[1] < 100:
+            tags.append("red_heavy")
+        if avg_color[1] > 180:
+            tags.append("green")
+        if avg_color[2] > 180:
+            tags.append("blue") # often means sky or water
+            
+        return tags
+    except Exception as e:
+        # If Pillow fails (e.g., unsupported format, corrupt), treat as general file
+        return ["file_error", "unsupported"] 
+
+def determine_directory(tags):
+    """Intelligently matches tags to an existing or new category."""
+    global EXISTING_CATEGORIES # Use the global dictionary
+
+    best_match_dir = "unclassified"
+    max_matches = 0
+    
+    # 1. Check against existing categories
+    for directory, keywords in EXISTING_CATEGORIES.items():
+        matches = sum(1 for tag in tags if tag in keywords)
+        if matches > max_matches:
+            max_matches = matches
+            best_match_dir = directory
+            
+    # 2. Determine action
+    if max_matches > 0 and max_matches >= 1:
+        # Found a good match
+        return best_match_dir
+    elif tags and tags[0] != "file_error":
+        # If no strong match, create a new directory based on the strongest non-error tag
+        new_dir_name = f"new_category_{tags[0]}"
+        
+        # Ensure new category isn't already a key (due to renaming logic)
+        if new_dir_name not in EXISTING_CATEGORIES:
+             EXISTING_CATEGORIES[new_dir_name] = [tags[0]] # 'Learn' the new category for this session
+        
+        return new_dir_name
+    else:
+        # No tags or only error tags
+        return "unclassified"
+
+def process_media_file(file_storage_object, base_dir, metadata_comment):
+    filename = secure_filename(file_storage_object.filename)
+    
+    # 1. Save file temporarily for analysis
+    temp_path = os.path.join(base_dir, "temp_" + filename)
+    file_storage_object.save(temp_path)
+    
+    # 2. Analyze and Categorize
+    tags = analyze_image_for_tags(temp_path)
+    
+    # If user provided a comment, use it to boost classification
+    if metadata_comment:
+        tags.extend(metadata_comment.lower().split())
+
+    target_dir_name = determine_directory(tags)
+    final_dir = os.path.join(base_dir, target_dir_name)
+    os.makedirs(final_dir, exist_ok=True)
+    
+    # 3. Move file to final intelligent location
+    final_path = os.path.join(final_dir, filename)
+    os.rename(temp_path, final_path) 
+    
+    return {
+        "status": "success",
+        "type": "Media/File",
+        "filename": filename,
+        "classification_tags": tags,
+        "storage_location": final_path,
+        "intelligence_action": f"Classified and placed in **{target_dir_name}**"
+    }
